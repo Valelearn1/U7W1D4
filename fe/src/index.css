@@ -1,10 +1,72 @@
 @import "tailwindcss";
 
+/* Variante `scuro:` per le poche regole che non si risolvono con i token.
+   Nella maggior parte dei casi non serve: i colori cambiano da soli perche'
+   le utility puntano a variabili CSS (vedi @theme inline qui sotto). */
+@custom-variant scuro (&:where([data-tema="scuro"], [data-tema="scuro"] *));
+
+/* `inline` e' la parte importante: senza, Tailwind congela il valore della
+   variabile al momento della build e il cambio di tema a runtime non funziona.
+   Con `inline` l'utility resta un var(), quindi segue il tema. */
+@theme inline {
+  --color-sfondo: var(--c-sfondo);
+  --color-superficie: var(--c-superficie);
+  --color-testo: var(--c-testo);
+  --color-tenue: var(--c-tenue);
+  --color-accento: var(--c-accento);
+  --color-bordo: var(--c-bordo);
+
+  --font-titolo: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
+
+  --c-sfondo: #faf7f0; /* carta */
+  --c-superficie: #ffffff;
+  --c-testo: #1a1815; /* inchiostro */
+  --c-tenue: #6b6459;
+  --c-accento: #b03a2e; /* rubrica */
+  --c-bordo: #e3ddd1;
+
+  /* Usata dallo skeleton: sul chiaro il luccichio e' piu' scuro della
+     superficie, sullo scuro e' piu' chiaro. */
+  --c-luccichio: rgb(0 0 0 / 0.06);
+}
+
+[data-tema="scuro"] {
+  color-scheme: dark;
+
+  --c-sfondo: #0e0d0c;
+  --c-superficie: #171513;
+  --c-testo: #f2ede4;
+  --c-tenue: #9a9083;
+  --c-accento: #e0685a; /* schiarito: il rubrica pieno non passa il contrasto su nero */
+  --c-bordo: #2a2724;
+
+  --c-luccichio: rgb(255 255 255 / 0.08);
 }
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background-color: var(--c-sfondo);
+  color: var(--c-testo);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Il cambio tema e' l'unica transizione di colore globale che vogliamo.
+   Senza la classe, ogni hover di ogni bottone erediterebbe 400ms di ritardo. */
+html[data-in-transizione] * {
+  transition:
+    background-color 350ms ease,
+    border-color 350ms ease,
+    color 350ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-in-transizione] * {
+    transition: none;
+  }
 }

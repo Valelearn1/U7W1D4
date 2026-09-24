@@ -3,7 +3,35 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Progetto base</title>
+
+    <title>Incipit</title>
+    <meta name="description" content="Incipit - il catalogo della biblioteca. Cerca, sfoglia, prendi in prestito." />
+    <meta name="theme-color" content="#FAF7F0" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0E0D0C" media="(prefers-color-scheme: dark)" />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Applica il tema prima del primo paint: senza, al ricaricamento si vede
+         un lampo chiaro anche se l'utente ha scelto lo scuro. -->
+    <script>
+      (function () {
+        try {
+          var salvato = localStorage.getItem('incipit-tema')
+          document.documentElement.dataset.tema =
+            salvato || (matchMedia('(prefers-color-scheme: dark)').matches ? 'scuro' : 'chiaro')
+        } catch (e) {
+          document.documentElement.dataset.tema = 'chiaro'
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

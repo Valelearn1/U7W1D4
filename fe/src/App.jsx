@@ -1,44 +1,41 @@
-import { useEffect, useState } from 'react'
-import { api } from '@/lib/api'
+import { useEffect } from 'react'
+import { Route, Routes, useLocation } from 'react-router'
+import Layout from '@/components/Layout'
+import Home from '@/pages/Home'
+import Catalogo from '@/pages/Catalogo'
+import PaginaBanco from '@/pages/Banco'
+import Libro from '@/pages/Libro'
+import Accedi from '@/pages/Accedi'
+import Registrati from '@/pages/Registrati'
+import Profilo from '@/pages/Profilo'
+import Amministrazione from '@/pages/Amministrazione'
+import NonTrovata from '@/pages/NonTrovata'
+
+// Senza, cambiando pagina si resta alla stessa altezza di scroll: si arriva
+// sul catalogo gia' a meta' pagina.
+function RiportaSu() {
+  const { pathname } = useLocation()
+  useEffect(() => window.scrollTo(0, 0), [pathname])
+  return null
+}
 
 export default function App() {
-  const [stato, setStato] = useState(null)
-  const [errore, setErrore] = useState(null)
-
-  useEffect(() => {
-    api
-      .stato()
-      .then(setStato)
-      .catch((e) => setErrore(e instanceof Error ? e.message : String(e)))
-  }, [])
-
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <div className="mx-auto max-w-2xl px-4 py-10">
-        <h1 className="text-3xl font-semibold tracking-tight">Progetto base</h1>
-        <p className="mt-1 text-sm text-slate-600">React + JavaScript, Spring Boot, PostgreSQL.</p>
-
-        <section className="mt-8 rounded-lg border border-slate-200 bg-white p-4 text-sm">
-          <div className="flex justify-between gap-4">
-            <span className="text-slate-500">API</span>
-            <code className="truncate font-mono text-xs">{api.indirizzo}</code>
-          </div>
-          <div className="mt-2 flex justify-between gap-4">
-            <span className="text-slate-500">Database</span>
-            <span className="font-mono text-xs">{stato ? stato.database : '...'}</span>
-          </div>
-          <div className="mt-2 flex justify-between gap-4">
-            <span className="text-slate-500">Ora del server</span>
-            <span className="font-mono text-xs">{stato ? stato.ora : '...'}</span>
-          </div>
-        </section>
-
-        {errore && (
-          <p className="mt-6 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-            {errore}
-          </p>
-        )}
-      </div>
-    </div>
+    <>
+      <RiportaSu />
+      <Routes>
+        <Route element={<Layout />}>
+          <Route index element={<Home />} />
+          <Route path="catalogo" element={<Catalogo />} />
+          <Route path="libro/:id" element={<Libro />} />
+          <Route path="prestiti" element={<PaginaBanco />} />
+          <Route path="accedi" element={<Accedi />} />
+          <Route path="registrati" element={<Registrati />} />
+          <Route path="profilo" element={<Profilo />} />
+          <Route path="amministrazione" element={<Amministrazione />} />
+          <Route path="*" element={<NonTrovata />} />
+        </Route>
+      </Routes>
+    </>
   )
 }
