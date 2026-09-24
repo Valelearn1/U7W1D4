@@ -1,0 +1,2430 @@
+{
+  "info": {
+    "_postman_id": "00b018aa-b101-4a7f-b5ca-4fd8850be242",
+    "name": "Biblioteca API",
+    "description": "Endpoint del BE Biblioteca.\n\n1. Seleziona l'environment \"Biblioteca - Local\" e imposta superuserPassword (colonna Current value).\n2. Fai uno dei login (\"Login SuperUser\" o \"Login utente\"): il token va in {{jwt}} e TUTTE le richieste lo usano. Vale sempre l'ultimo login fatto; {{loggatoCome}} indica chi sei.\n3. Per il giro completo usa il Runner sull'intera collection: ogni cartella fa i login che le servono.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "superuserEmail",
+      "value": "superuser@biblioteca.it"
+    },
+    {
+      "key": "userEmail",
+      "value": "mario.rossi@test.it"
+    },
+    {
+      "key": "userPassword",
+      "value": "password123"
+    },
+    {
+      "key": "genereNome",
+      "value": "Fantasy"
+    },
+    {
+      "key": "isbn",
+      "value": "9788845292613"
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Login",
+      "item": [
+        {
+          "name": "Login SuperUser",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{superuserEmail}}\",\n  \"password\": \"{{superuserPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Salva il token in {{jwt}}: da qui in poi tutte le richieste partono come SuperUser."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.variables.get(\"superuserPassword\")) {",
+                  "    throw new Error(\"Variabile superuserPassword vuota: impostala nell'environment \\\"Biblioteca - Local\\\" (colonna Current value) e salva.\");",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const store = (pm.environment.name ? pm.environment : pm.collectionVariables);",
+                  "if (pm.response.code === 200) {",
+                  "    store.set(\"jwt\", pm.response.json().token);",
+                  "    store.set(\"loggatoCome\", \"SuperUser\");",
+                  "} else {",
+                  "    store.unset(\"jwt\");",
+                  "}",
+                  "pm.test(\"Login SuperUser riuscito (ora le richieste usano questo token)\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register utente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "register"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\",\n  \"dataDiNascita\": \"1995-03-15\",\n  \"nome\": \"Mario\",\n  \"cognome\": \"Rossi\",\n  \"indirizzo\": \"Via Roma 1, Milano\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "201 alla prima esecuzione, 409 se l'utente esiste già."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201 o 409\", () => pm.expect(pm.response.code).to.be.oneOf([201, 409]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login utente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Salva il token in {{jwt}}: da qui in poi tutte le richieste partono come utente."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.variables.get(\"userPassword\")) {",
+                  "    throw new Error(\"Variabile userPassword vuota: impostala nell'environment \\\"Biblioteca - Local\\\" (colonna Current value) e salva.\");",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const store = (pm.environment.name ? pm.environment : pm.collectionVariables);",
+                  "if (pm.response.code === 200) {",
+                  "    store.set(\"jwt\", pm.response.json().token);",
+                  "    store.set(\"loggatoCome\", \"utente\");",
+                  "} else {",
+                  "    store.unset(\"jwt\");",
+                  "}",
+                  "pm.test(\"Login utente riuscito (ora le richieste usano questo token)\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Scegli con chi vuoi lavorare (Register crea l'utente di prova se non esiste). Le cartelle seguenti rifanno comunque i login necessari."
+    },
+    {
+      "name": "1. Utente (/api/user)",
+      "item": [
+        {
+          "name": "Login utente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Salva il token in {{jwt}}: da qui in poi tutte le richieste partono come utente."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.variables.get(\"userPassword\")) {",
+                  "    throw new Error(\"Variabile userPassword vuota: impostala nell'environment \\\"Biblioteca - Local\\\" (colonna Current value) e salva.\");",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const store = (pm.environment.name ? pm.environment : pm.collectionVariables);",
+                  "if (pm.response.code === 200) {",
+                  "    store.set(\"jwt\", pm.response.json().token);",
+                  "    store.set(\"loggatoCome\", \"utente\");",
+                  "} else {",
+                  "    store.unset(\"jwt\");",
+                  "}",
+                  "pm.test(\"Login utente riuscito (ora le richieste usano questo token)\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "me"
+              ]
+            },
+            "description": "Dati dell'utente loggato. Se non è il SuperUser salva il suo id in {{userId}} (usato da prestiti e ruoli)."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "if (pm.response.code === 200) {",
+                  "    const j = pm.response.json();",
+                  "    if (!j.ruoli.includes(\"SuperUser\")) (pm.environment.name ? pm.environment : pm.collectionVariables).set(\"userId\", j.id);",
+                  "    pm.test(\"Password non esposta\", () => pm.expect(j).to.not.have.property(\"password\"));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "refresh"
+              ]
+            },
+            "description": "Revoca il token attuale e ne salva uno nuovo in {{jwt}}."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "if (pm.response.code === 200) (pm.environment.name ? pm.environment : pm.collectionVariables).set(\"jwt\", pm.response.json().token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register - dati non validi (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "register"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"non-una-email\",\n  \"password\": \"corta\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.expect(pm.response.code).to.be.oneOf([400]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Me - senza token (401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "me"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 401\", () => pm.expect(pm.response.code).to.be.oneOf([401]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Generi (/api/generi)",
+      "item": [
+        {
+          "name": "Login SuperUser",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{superuserEmail}}\",\n  \"password\": \"{{superuserPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Salva il token in {{jwt}}: da qui in poi tutte le richieste partono come SuperUser."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.variables.get(\"superuserPassword\")) {",
+                  "    throw new Error(\"Variabile superuserPassword vuota: impostala nell'environment \\\"Biblioteca - Local\\\" (colonna Current value) e salva.\");",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const store = (pm.environment.name ? pm.environment : pm.collectionVariables);",
+                  "if (pm.response.code === 200) {",
+                  "    store.set(\"jwt\", pm.response.json().token);",
+                  "    store.set(\"loggatoCome\", \"SuperUser\");",
+                  "} else {",
+                  "    store.unset(\"jwt\");",
+                  "}",
+                  "pm.test(\"Login SuperUser riuscito (ora le richieste usano questo token)\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nuovo genere",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/generi/newGenere",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "generi",
+                "newGenere"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"{{genereNome}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Admin / SuperUser. 409 se il genere esiste già (case-insensitive)."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201 o 409\", () => pm.expect(pm.response.code).to.be.oneOf([201, 409]));",
+                  "if (pm.response.code === 201) (pm.environment.name ? pm.environment : pm.collectionVariables).set(\"genereId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tutti i generi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/generi/allGeneri",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "generi",
+                "allGeneri"
+              ]
+            },
+            "description": "Qualsiasi utente loggato. Lista per i menu a tendina; salva in {{genereId}} l'id di {{genereNome}}."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "if (pm.response.code === 200) {",
+                  "    const nome = (pm.variables.get(\"genereNome\") || \"\").toLowerCase();",
+                  "    const g = pm.response.json().find(x => x.nome.toLowerCase() === nome);",
+                  "    if (g) (pm.environment.name ? pm.environment : pm.collectionVariables).set(\"genereId\", g.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login utente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Salva il token in {{jwt}}: da qui in poi tutte le richieste partono come utente."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.variables.get(\"userPassword\")) {",
+                  "    throw new Error(\"Variabile userPassword vuota: impostala nell'environment \\\"Biblioteca - Local\\\" (colonna Current value) e salva.\");",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const store = (pm.environment.name ? pm.environment : pm.collectionVariables);",
+                  "if (pm.response.code === 200) {",
+                  "    store.set(\"jwt\", pm.response.json().token);",
+                  "    store.set(\"loggatoCome\", \"utente\");",
+                  "} else {",
+                  "    store.unset(\"jwt\");",
+                  "}",
+                  "pm.test(\"Login utente riuscito (ora le richieste usano questo token)\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nuovo genere - come utente (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/generi/newGenere",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "generi",
+                "newGenere"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Vietato\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 403\", () => pm.expect(pm.response.code).to.be.oneOf([403]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Libri (/api/book)",
+      "item": [
+        {
+          "name": "Login SuperUser",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{superuserEmail}}\",\n  \"password\": \"{{superuserPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Salva il token in {{jwt}}: da qui in poi tutte le richieste partono come SuperUser."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.variables.get(\"superuserPassword\")) {",
+                  "    throw new Error(\"Variabile superuserPassword vuota: impostala nell'environment \\\"Biblioteca - Local\\\" (colonna Current value) e salva.\");",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const store = (pm.environment.name ? pm.environment : pm.collectionVariables);",
+                  "if (pm.response.code === 200) {",
+                  "    store.set(\"jwt\", pm.response.json().token);",
+                  "    store.set(\"loggatoCome\", \"SuperUser\");",
+                  "} else {",
+                  "    store.unset(\"jwt\");",
+                  "}",
+                  "pm.test(\"Login SuperUser riuscito (ora le richieste usano questo token)\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nuovo libro",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/book/newLibro",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "book",
+                "newLibro"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isbn\": {{isbn}},\n  \"titolo\": \"Lo Hobbit\",\n  \"autore\": \"J.R.R. Tolkien\",\n  \"edizione\": null,\n  \"casaEditrice\": \"Bompiani\",\n  \"prezzo\": 12.5,\n  \"annoDiUscita\": 1937,\n  \"copie\": 3,\n  \"copertinaRigida\": true,\n  \"genereId\": \"{{genereId}}\",\n  \"path\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Admin / SuperUser. 201 se nuovo; 200 se l'ISBN esiste già (copie aggiunte). Richiede {{genereId}}."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201 o 200\", () => pm.expect(pm.response.code).to.be.oneOf([201, 200]));",
+                  "if (pm.response.code < 300) (pm.environment.name ? pm.environment : pm.collectionVariables).set(\"libroId\", pm.response.json().libro.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Aggiungi copie",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/book/addLibro",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "book",
+                "addLibro"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idLibro\": \"{{libroId}}\",\n  \"copie\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Admin / SuperUser. copie è facoltativo (default 1)."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tutti i libri",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/book/all?page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "book",
+                "all"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Pubblico. Ordinati per titolo crescente."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cerca libri",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/book/search?q=tolkien&sort=autore,asc&sort=prezzo,desc&page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "book",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "tolkien",
+                  "description": "Testo libero su titolo, autore, casa editrice, genere, ISBN"
+                },
+                {
+                  "key": "titolo",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "autore",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "casaEditrice",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "genereId",
+                  "value": "{{genereId}}",
+                  "disabled": true
+                },
+                {
+                  "key": "annoDa",
+                  "value": "1900",
+                  "disabled": true
+                },
+                {
+                  "key": "annoA",
+                  "value": "2000",
+                  "disabled": true
+                },
+                {
+                  "key": "prezzoMin",
+                  "value": "5",
+                  "disabled": true
+                },
+                {
+                  "key": "prezzoMax",
+                  "value": "20",
+                  "disabled": true
+                },
+                {
+                  "key": "copertinaRigida",
+                  "value": "true",
+                  "disabled": true
+                },
+                {
+                  "key": "disponibile",
+                  "value": "true",
+                  "disabled": true
+                },
+                {
+                  "key": "sort",
+                  "value": "autore,asc"
+                },
+                {
+                  "key": "sort",
+                  "value": "prezzo,desc"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Pubblico. Attiva/disattiva i parametri. sort ripetibile: titolo, autore, casaEditrice, edizione, prezzo, annoDiUscita, copieDisponibili, copieTotali, isbn, genere."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login utente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Salva il token in {{jwt}}: da qui in poi tutte le richieste partono come utente."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.variables.get(\"userPassword\")) {",
+                  "    throw new Error(\"Variabile userPassword vuota: impostala nell'environment \\\"Biblioteca - Local\\\" (colonna Current value) e salva.\");",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const store = (pm.environment.name ? pm.environment : pm.collectionVariables);",
+                  "if (pm.response.code === 200) {",
+                  "    store.set(\"jwt\", pm.response.json().token);",
+                  "    store.set(\"loggatoCome\", \"utente\");",
+                  "} else {",
+                  "    store.unset(\"jwt\");",
+                  "}",
+                  "pm.test(\"Login utente riuscito (ora le richieste usano questo token)\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nuovo libro - come utente (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/book/newLibro",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "book",
+                "newLibro"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isbn\": {{isbn}},\n  \"titolo\": \"Lo Hobbit\",\n  \"autore\": \"J.R.R. Tolkien\",\n  \"edizione\": null,\n  \"casaEditrice\": \"Bompiani\",\n  \"prezzo\": 12.5,\n  \"annoDiUscita\": 1937,\n  \"copie\": 3,\n  \"copertinaRigida\": true,\n  \"genereId\": \"{{genereId}}\",\n  \"path\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 403\", () => pm.expect(pm.response.code).to.be.oneOf([403]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Prestiti (/api/prestiti)",
+      "item": [
+        {
+          "name": "Login SuperUser",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{superuserEmail}}\",\n  \"password\": \"{{superuserPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Salva il token in {{jwt}}: da qui in poi tutte le richieste partono come SuperUser."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.variables.get(\"superuserPassword\")) {",
+                  "    throw new Error(\"Variabile superuserPassword vuota: impostala nell'environment \\\"Biblioteca - Local\\\" (colonna Current value) e salva.\");",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const store = (pm.environment.name ? pm.environment : pm.collectionVariables);",
+                  "if (pm.response.code === 200) {",
+                  "    store.set(\"jwt\", pm.response.json().token);",
+                  "    store.set(\"loggatoCome\", \"SuperUser\");",
+                  "} else {",
+                  "    store.unset(\"jwt\");",
+                  "}",
+                  "pm.test(\"Login SuperUser riuscito (ora le richieste usano questo token)\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nuovo prestito",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/prestiti/NewPrestito",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "prestiti",
+                "NewPrestito"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"libroId\": \"{{libroId}}\",\n  \"durata\": \"MEDIA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Admin / SuperUser. durata: BREVE | MEDIA | LUNGA (facoltativa, default MEDIA; giorni presi da /api/costanti). 409 se il libro non ha copie disponibili. Richiede {{userId}} e {{libroId}}."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.expect(pm.response.code).to.be.oneOf([201]));",
+                  "if (pm.response.code === 201) (pm.environment.name ? pm.environment : pm.collectionVariables).set(\"prestitoId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Estendi prestito",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/prestiti/ExtendPrestito",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "prestiti",
+                "ExtendPrestito"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPrestito\": \"{{prestitoId}}\",\n  \"giorni\": 15\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Admin / SuperUser."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Estendi di nuovo (409)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/prestiti/ExtendPrestito",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "prestiti",
+                "ExtendPrestito"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPrestito\": \"{{prestitoId}}\",\n  \"giorni\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Un prestito si può estendere una sola volta."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 409\", () => pm.expect(pm.response.code).to.be.oneOf([409]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tutti i prestiti",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/prestiti/AllPrestiti?sort=createdAt,desc&page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "prestiti",
+                "AllPrestiti"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "disabled": true
+                },
+                {
+                  "key": "q",
+                  "value": "",
+                  "disabled": true,
+                  "description": "Email/nome/cognome utente, titolo, ISBN"
+                },
+                {
+                  "key": "stato",
+                  "value": "APERTO",
+                  "disabled": true,
+                  "description": "APERTO | IN_RITARDO | CHIUSO"
+                },
+                {
+                  "key": "extended",
+                  "value": "true",
+                  "disabled": true
+                },
+                {
+                  "key": "libroId",
+                  "value": "{{libroId}}",
+                  "disabled": true
+                },
+                {
+                  "key": "dataDa",
+                  "value": "2026-01-01",
+                  "disabled": true
+                },
+                {
+                  "key": "dataA",
+                  "value": "2026-12-31",
+                  "disabled": true
+                },
+                {
+                  "key": "scadenzaDa",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "scadenzaA",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sort",
+                  "value": "createdAt,desc"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Admin / SuperUser. sort: createdAt, dataRiconsegnaPrevista, dataRiconsegnaEffettiva, penaleRiscossa, extended, titolo, email, cognome, nome."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Chiudi prestito",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/prestiti/ClosePrestito",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "prestiti",
+                "ClosePrestito"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPrestito\": \"{{prestitoId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Admin / SuperUser. Penale calcolata dal server: giorni di ritardo x prestito.penale.giornaliera, con tetto prestito.penale.massima; null se riconsegnato in tempo."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.expect(pm.response.code).to.be.oneOf([201]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login utente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Salva il token in {{jwt}}: da qui in poi tutte le richieste partono come utente."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.variables.get(\"userPassword\")) {",
+                  "    throw new Error(\"Variabile userPassword vuota: impostala nell'environment \\\"Biblioteca - Local\\\" (colonna Current value) e salva.\");",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const store = (pm.environment.name ? pm.environment : pm.collectionVariables);",
+                  "if (pm.response.code === 200) {",
+                  "    store.set(\"jwt\", pm.response.json().token);",
+                  "    store.set(\"loggatoCome\", \"utente\");",
+                  "} else {",
+                  "    store.unset(\"jwt\");",
+                  "}",
+                  "pm.test(\"Login utente riuscito (ora le richieste usano questo token)\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Prestiti personali",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/prestiti/UserPrestiti?sort=createdAt,desc&page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "prestiti",
+                "UserPrestiti"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "",
+                  "disabled": true,
+                  "description": "Email/nome/cognome utente, titolo, ISBN"
+                },
+                {
+                  "key": "stato",
+                  "value": "APERTO",
+                  "disabled": true,
+                  "description": "APERTO | IN_RITARDO | CHIUSO"
+                },
+                {
+                  "key": "extended",
+                  "value": "true",
+                  "disabled": true
+                },
+                {
+                  "key": "libroId",
+                  "value": "{{libroId}}",
+                  "disabled": true
+                },
+                {
+                  "key": "dataDa",
+                  "value": "2026-01-01",
+                  "disabled": true
+                },
+                {
+                  "key": "dataA",
+                  "value": "2026-12-31",
+                  "disabled": true
+                },
+                {
+                  "key": "scadenzaDa",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "scadenzaA",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sort",
+                  "value": "createdAt,desc"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Utente loggato: solo i propri prestiti."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tutti i prestiti - come utente (403)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/prestiti/AllPrestiti",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "prestiti",
+                "AllPrestiti"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 403\", () => pm.expect(pm.response.code).to.be.oneOf([403]));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Richiede {{userId}} (da \"1. Utente > Me\") e {{libroId}} (da \"3. Libri > Nuovo libro\")."
+    },
+    {
+      "name": "5. Ruoli (/api/role)",
+      "item": [
+        {
+          "name": "Login SuperUser",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{superuserEmail}}\",\n  \"password\": \"{{superuserPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Salva il token in {{jwt}}: da qui in poi tutte le richieste partono come SuperUser."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.variables.get(\"superuserPassword\")) {",
+                  "    throw new Error(\"Variabile superuserPassword vuota: impostala nell'environment \\\"Biblioteca - Local\\\" (colonna Current value) e salva.\");",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const store = (pm.environment.name ? pm.environment : pm.collectionVariables);",
+                  "if (pm.response.code === 200) {",
+                  "    store.set(\"jwt\", pm.response.json().token);",
+                  "    store.set(\"loggatoCome\", \"SuperUser\");",
+                  "} else {",
+                  "    store.unset(\"jwt\");",
+                  "}",
+                  "pm.test(\"Login SuperUser riuscito (ora le richieste usano questo token)\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nuovo ruolo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/role",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "role"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ruolo\": \"Bibliotecario\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Solo SuperUser. 409 se esiste già."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201 o 409\", () => pm.expect(pm.response.code).to.be.oneOf([201, 409]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Grant Admin all'utente",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/role/grantAdmin/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "role",
+                "grantAdmin",
+                "{{userId}}"
+              ]
+            },
+            "description": "Solo SuperUser. Revoca i token attivi dell'utente: deve rifare login."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201 o 409\", () => pm.expect(pm.response.code).to.be.oneOf([201, 409]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Revoke Admin all'utente",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/role/revokeAdmin/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "role",
+                "revokeAdmin",
+                "{{userId}}"
+              ]
+            },
+            "description": "Solo SuperUser. Revoca i token attivi dell'utente."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 o 404\", () => pm.expect(pm.response.code).to.be.oneOf([200, 404]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login utente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Salva il token in {{jwt}}: da qui in poi tutte le richieste partono come utente."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.variables.get(\"userPassword\")) {",
+                  "    throw new Error(\"Variabile userPassword vuota: impostala nell'environment \\\"Biblioteca - Local\\\" (colonna Current value) e salva.\");",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const store = (pm.environment.name ? pm.environment : pm.collectionVariables);",
+                  "if (pm.response.code === 200) {",
+                  "    store.set(\"jwt\", pm.response.json().token);",
+                  "    store.set(\"loggatoCome\", \"utente\");",
+                  "} else {",
+                  "    store.unset(\"jwt\");",
+                  "}",
+                  "pm.test(\"Login utente riuscito (ora le richieste usano questo token)\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nuovo ruolo - come utente (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/role",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "role"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ruolo\": \"Vietato\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 403\", () => pm.expect(pm.response.code).to.be.oneOf([403]));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Grant/revoke invalidano i token dell'utente: la cartella rifà il login dopo."
+    },
+    {
+      "name": "6. Costanti (/api/costanti)",
+      "item": [
+        {
+          "name": "Login SuperUser",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{superuserEmail}}\",\n  \"password\": \"{{superuserPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Salva il token in {{jwt}}: da qui in poi tutte le richieste partono come SuperUser."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.variables.get(\"superuserPassword\")) {",
+                  "    throw new Error(\"Variabile superuserPassword vuota: impostala nell'environment \\\"Biblioteca - Local\\\" (colonna Current value) e salva.\");",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const store = (pm.environment.name ? pm.environment : pm.collectionVariables);",
+                  "if (pm.response.code === 200) {",
+                  "    store.set(\"jwt\", pm.response.json().token);",
+                  "    store.set(\"loggatoCome\", \"SuperUser\");",
+                  "} else {",
+                  "    store.unset(\"jwt\");",
+                  "}",
+                  "pm.test(\"Login SuperUser riuscito (ora le richieste usano questo token)\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tutte le costanti",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/costanti/all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "costanti",
+                "all"
+              ]
+            },
+            "description": "Admin / SuperUser. Ordinate per chiave."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nuova costante",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/costanti/newCostante",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "costanti",
+                "newCostante"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chiave\": \"biblioteca.nome\",\n  \"valore\": \"Biblioteca Civica\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Solo SuperUser. 409 se la chiave esiste già."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201 o 409\", () => pm.expect(pm.response.code).to.be.oneOf([201, 409]));",
+                  "if (pm.response.code === 201) (pm.environment.name ? pm.environment : pm.collectionVariables).set(\"costanteId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Modifica costante",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/costanti/editCostante",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "costanti",
+                "editCostante"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{costanteId}}\",\n  \"valore\": \"Biblioteca Comunale\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Solo SuperUser. Invia solo i campi da cambiare (chiave e/o valore). Le costanti di sistema (prestito.*) accettano solo valori validi e non si possono rinominare."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Elimina costante",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/costanti/deleteCostante/{{costanteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "costanti",
+                "deleteCostante",
+                "{{costanteId}}"
+              ]
+            },
+            "description": "Solo SuperUser. Eliminando una costante di sistema (prestito.*) il BE usa il valore di default del codice; al riavvio la riga viene ricreata."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login utente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Salva il token in {{jwt}}: da qui in poi tutte le richieste partono come utente."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.variables.get(\"userPassword\")) {",
+                  "    throw new Error(\"Variabile userPassword vuota: impostala nell'environment \\\"Biblioteca - Local\\\" (colonna Current value) e salva.\");",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const store = (pm.environment.name ? pm.environment : pm.collectionVariables);",
+                  "if (pm.response.code === 200) {",
+                  "    store.set(\"jwt\", pm.response.json().token);",
+                  "    store.set(\"loggatoCome\", \"utente\");",
+                  "} else {",
+                  "    store.unset(\"jwt\");",
+                  "}",
+                  "pm.test(\"Login utente riuscito (ora le richieste usano questo token)\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tutte le costanti - come utente (403)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/costanti/all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "costanti",
+                "all"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 403\", () => pm.expect(pm.response.code).to.be.oneOf([403]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7. Logout",
+      "item": [
+        {
+          "name": "Login utente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Salva il token in {{jwt}}: da qui in poi tutte le richieste partono come utente."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.variables.get(\"userPassword\")) {",
+                  "    throw new Error(\"Variabile userPassword vuota: impostala nell'environment \\\"Biblioteca - Local\\\" (colonna Current value) e salva.\");",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const store = (pm.environment.name ? pm.environment : pm.collectionVariables);",
+                  "if (pm.response.code === 200) {",
+                  "    store.set(\"jwt\", pm.response.json().token);",
+                  "    store.set(\"loggatoCome\", \"utente\");",
+                  "} else {",
+                  "    store.unset(\"jwt\");",
+                  "}",
+                  "pm.test(\"Login utente riuscito (ora le richieste usano questo token)\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "logout"
+              ]
+            },
+            "description": "Invalida il token corrente."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(pm.environment.name ? pm.environment : pm.collectionVariables).set(\"tokenRevocato\", pm.variables.get(\"jwt\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "(pm.environment.name ? pm.environment : pm.collectionVariables).unset(\"jwt\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Me con token revocato (401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "me"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// usa il token appena revocato, salvato prima del logout",
+                  "pm.request.headers.upsert({key: \"Authorization\", value: \"Bearer \" + pm.variables.get(\"tokenRevocato\")});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 401\", () => pm.expect(pm.response.code).to.be.oneOf([401]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
