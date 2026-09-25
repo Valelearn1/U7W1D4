@@ -3,7 +3,9 @@ import { Route, Routes, useLocation } from 'react-router'
 import Layout from '@/components/Layout'
 import Home from '@/pages/Home'
 import Catalogo from '@/pages/Catalogo'
-import PaginaBanco from '@/pages/Banco'
+import Banco from '@/pages/Banco'
+import DaLeggere from '@/pages/DaLeggere'
+import Prestiti from '@/pages/Prestiti'
 import Libro from '@/pages/Libro'
 import Accedi from '@/pages/Accedi'
 import Registrati from '@/pages/Registrati'
@@ -28,7 +30,9 @@ export default function App() {
           <Route index element={<Home />} />
           <Route path="catalogo" element={<Catalogo />} />
           <Route path="libro/:id" element={<Libro />} />
-          <Route path="prestiti" element={<PaginaBanco />} />
+          <Route path="banco" element={<Banco />} />
+          <Route path="da-leggere" element={<DaLeggere />} />
+          <Route path="prestiti" element={<Prestiti />} />
           <Route path="accedi" element={<Accedi />} />
           <Route path="registrati" element={<Registrati />} />
           <Route path="profilo" element={<Profilo />} />

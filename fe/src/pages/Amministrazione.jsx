@@ -2,6 +2,9 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useCallback, useEffect, useState } from 'react'
 import { Navigate } from 'react-router'
 import { Campo } from '@/pages/Accedi'
+import SelettoreIscritto from '@/components/SelettoreIscritto'
+import { useRaccolta } from '@/components/Raccolta'
+import { Link } from 'react-router'
 import { Blocco } from '@/components/Scheletro'
 import { useSessione } from '@/components/Sessione'
 import { useToast } from '@/components/Toast'
@@ -13,6 +16,7 @@ import { api } from '@/lib/api'
 //   editCostante, grantAdmin, revokeAdmin                     -> solo SuperUser
 const SCHEDE = [
   { id: 'prestiti', titolo: 'Prestiti', soloSuper: false },
+  { id: 'iscritti', titolo: 'Iscritti', soloSuper: false },
   { id: 'catalogo', titolo: 'Catalogo', soloSuper: false },
   { id: 'costanti', titolo: 'Regole', soloSuper: true },
   { id: 'ruoli', titolo: 'Ruoli', soloSuper: true },
@@ -89,6 +93,7 @@ export default function Amministrazione() {
           transition={{ duration: 0.22 }}
         >
           {scheda === 'prestiti' && <SchedaPrestiti />}
+          {scheda === 'iscritti' && <SchedaIscritti />}
           {scheda === 'catalogo' && <SchedaCatalogo />}
           {scheda === 'costanti' && <SchedaCostanti />}
           {scheda === 'ruoli' && <SchedaRuoli />}
@@ -195,6 +200,151 @@ function SchedaPrestiti() {
         </ul>
       )}
     </section>
+  )
+}
+
+/* ---------------------------- iscritti ---------------------------- */
+
+function dataIt(iso) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+// La scheda che serve all'operatore al banco: chi ho davanti, cosa ha in
+// prestito, se e' in regola.
+function SchedaIscritti() {
+  const toast = useToast()
+  const raccolta = useRaccolta()
+  // Stessa scelta del banco: consultare e servire sono lo stesso gesto.
+  const iscritto = raccolta.iscritto
+  const setIscritto = raccolta.servi
+  const [prestiti, setPrestiti] = useState(null)
+
+  const carica = useCallback(
+    (id) => {
+      setPrestiti(null)
+      api
+        .tuttiPrestiti({ userId: id, size: 100 })
+        .then((p) => setPrestiti(p.content))
+        .catch((e) => toast.errore(e.message))
+    },
+    [toast],
+  )
+
+  useEffect(() => {
+    if (iscritto?.id) carica(iscritto.id)
+    else setPrestiti(null)
+  }, [iscritto, carica])
+
+  async function restituisci(prestito) {
+    try {
+      await api.chiudiPrestito({ idPrestito: prestito.id })
+      toast.ok(`"${prestito.libro.titolo}" restituito`)
+      carica(iscritto.id)
+    } catch (e) {
+      toast.errore(e.message)
+    }
+  }
+
+  const aperti = (prestiti ?? []).filter((p) => p.stato !== 'CHIUSO')
+  const ritardo = (prestiti ?? []).filter((p) => p.stato === 'IN_RITARDO')
+  const chiusi = (prestiti ?? []).filter((p) => p.stato === 'CHIUSO')
+  const penali = (prestiti ?? []).reduce((s, p) => s + Number(p.penaleRiscossa ?? 0), 0)
+
+  return (
+    <section>
+      <div className="rounded-xl border border-bordo bg-superficie p-4">
+        <h2 className="text-xs tracking-[0.14em] text-tenue uppercase">Chi stai servendo</h2>
+        <div className="mt-3">
+          <SelettoreIscritto scelto={iscritto} onScegli={setIscritto} />
+        </div>
+      </div>
+
+      {!iscritto ? (
+        <p className="py-12 text-center text-sm text-tenue">
+          Scegli un iscritto per vedere la sua situazione.
+        </p>
+      ) : prestiti === null ? (
+        <div className="mt-6 flex flex-col gap-2">
+          {[0, 1, 2].map((i) => (
+            <Blocco key={i} className="h-16 w-full rounded-xl" ritardo={i * 0.1} />
+          ))}
+        </div>
+      ) : (
+        <>
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Riquadro valore={aperti.length} etichetta="In corso" />
+            <Riquadro valore={ritardo.length} etichetta="In ritardo" accento={ritardo.length > 0} />
+            <Riquadro valore={chiusi.length} etichetta="Restituiti" />
+            <Riquadro valore={`${penali.toFixed(2)} €`} etichetta="Penali" accento={penali > 0} />
+          </div>
+
+          {aperti.length > 0 ? (
+            <>
+              <h3 className="mt-8 mb-3 text-xs tracking-[0.14em] text-tenue uppercase">
+                Libri in prestito
+              </h3>
+              <ul className="flex flex-col gap-2">
+                {aperti.map((p) => (
+                  <li
+                    key={p.id}
+                    className="flex flex-wrap items-center gap-3 rounded-xl border border-bordo bg-superficie px-4 py-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{p.libro.titolo}</p>
+                      <p className="truncate text-xs text-tenue">
+                        {p.libro.autore} · scade il {dataIt(p.dataRiconsegnaPrevista)}
+                        {p.extended && ' · già esteso'}
+                      </p>
+                    </div>
+                    {p.stato === 'IN_RITARDO' && (
+                      <span className="shrink-0 rounded-full bg-accento/12 px-2.5 py-1 text-[10px] text-accento">
+                        In ritardo
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => restituisci(p)}
+                      className="shrink-0 rounded-full border border-bordo px-3 py-1.5 text-xs transition-colors hover:border-tenue"
+                    >
+                      Restituisci
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p className="mt-8 text-sm text-tenue">Nessun libro in prestito.</p>
+          )}
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              to="/catalogo"
+              className="rounded-full bg-testo px-5 py-2 text-sm font-medium text-sfondo transition-opacity hover:opacity-85"
+            >
+              Scegli i libri dal catalogo
+            </Link>
+            {raccolta.quantita > 0 && (
+              <Link
+                to="/banco"
+                className="rounded-full bg-accento px-5 py-2 text-sm font-medium text-white transition-opacity hover:opacity-85"
+              >
+                Vai al banco ({raccolta.quantita})
+              </Link>
+            )}
+          </div>
+        </>
+      )}
+    </section>
+  )
+}
+
+function Riquadro({ valore, etichetta, accento }) {
+  return (
+    <div className="rounded-xl border border-bordo bg-superficie p-4">
+      <p className={`font-titolo text-2xl tabular-nums ${accento ? 'text-accento' : ''}`}>{valore}</p>
+      <p className="mt-0.5 text-xs text-tenue">{etichetta}</p>
+    </div>
   )
 }
 

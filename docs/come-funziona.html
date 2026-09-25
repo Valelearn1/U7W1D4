@@ -1,0 +1,591 @@
+<title>Incipit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap">
+
+<style>
+  /* Palette dei token dell'app: carta, inchiostro, rubrica.
+     :root porta lo schema chiaro completo; i due blocchi sotto ridefiniscono
+     SOLO i token, mai i componenti. */
+  :root {
+    color-scheme: light;
+
+    --carta:       #faf7f0;
+    --superficie:  #ffffff;
+    --rilievo:     #f4efe4;
+    --inchiostro:  #1a1815;
+    --tenue:       #6b6459;
+    --debole:      #8d857a;
+    --rubrica:     #b03a2e;
+    --rubrica-velo:#b03a2e14;
+    --bordo:       #e3ddd1;
+    --filo:        #ece6da;
+
+    /* tinte dei ruoli: semantiche, distinte dall'accento */
+    --lettore:     #3c6b60;
+    --lettore-velo:#3c6b6014;
+    --operatore:   #b03a2e;
+    --operatore-velo:#b03a2e14;
+    --super:       #6a3a5e;
+    --super-velo:  #6a3a5e14;
+
+    --ombra: 0 1px 2px #1a181510, 0 12px 28px -18px #1a181540;
+  }
+
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      color-scheme: dark;
+
+      --carta:       #0e0d0c;
+      --superficie:  #171513;
+      --rilievo:     #1e1b18;
+      --inchiostro:  #f2ede4;
+      --tenue:       #9a9083;
+      --debole:      #7d7469;
+      --rubrica:     #e0685a;
+      --rubrica-velo:#e0685a1f;
+      --bordo:       #2a2724;
+      --filo:        #232019;
+
+      --lettore:     #79b3a4;
+      --lettore-velo:#79b3a41f;
+      --operatore:   #e0685a;
+      --operatore-velo:#e0685a1f;
+      --super:       #c08bb0;
+      --super-velo:  #c08bb01f;
+
+      --ombra: 0 1px 2px #00000040, 0 12px 28px -18px #00000080;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+
+    --carta:       #0e0d0c;
+    --superficie:  #171513;
+    --rilievo:     #1e1b18;
+    --inchiostro:  #f2ede4;
+    --tenue:       #9a9083;
+    --debole:      #7d7469;
+    --rubrica:     #e0685a;
+    --rubrica-velo:#e0685a1f;
+    --bordo:       #2a2724;
+    --filo:        #232019;
+
+    --lettore:     #79b3a4;
+    --lettore-velo:#79b3a41f;
+    --operatore:   #e0685a;
+    --operatore-velo:#e0685a1f;
+    --super:       #c08bb0;
+    --super-velo:  #c08bb01f;
+
+    --ombra: 0 1px 2px #00000040, 0 12px 28px -18px #00000080;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--carta);
+    color: var(--inchiostro);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 15px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  code, .mono { font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace; }
+
+  code {
+    font-size: .88em;
+    background: var(--rilievo);
+    border: 1px solid var(--filo);
+    border-radius: 3px;
+    padding: .08em .34em;
+    white-space: nowrap;
+  }
+
+  a { color: var(--rubrica); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--rubrica); outline-offset: 2px; }
+
+  /* ---------- impianto ---------- */
+
+  .foglio {
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 0 24px 96px;
+  }
+
+  .testata {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    padding: 44px 0 30px;
+    border-bottom: 1px solid var(--bordo);
+  }
+  .marchio { flex: 0 0 auto; margin-top: 3px; }
+  .titolone {
+    margin: 0;
+    font-family: Fraunces, Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(2.1rem, 5vw, 3rem);
+    letter-spacing: -.022em;
+    line-height: 1.02;
+    text-wrap: balance;
+  }
+  .sottotitolo {
+    margin: 6px 0 0;
+    max-width: 62ch;
+    color: var(--tenue);
+    font-size: 1.02rem;
+  }
+
+  .tesi {
+    margin: 26px 0 0;
+    padding: 16px 20px;
+    border-left: 2px solid var(--rubrica);
+    background: var(--rubrica-velo);
+    max-width: 68ch;
+  }
+  .tesi p { margin: 0; }
+
+  .corpo {
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr);
+    gap: 52px;
+    align-items: start;
+    padding-top: 40px;
+  }
+
+  .indice { position: sticky; top: 28px; }
+  .indice-et {
+    margin: 0 0 12px;
+    font-size: .68rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--debole);
+  }
+  .indice ol { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 1px; }
+  .indice a {
+    display: grid;
+    grid-template-columns: 22px 1fr;
+    gap: 8px;
+    padding: 5px 0;
+    color: var(--tenue);
+    text-decoration: none;
+    font-size: .875rem;
+    border-bottom: 1px solid transparent;
+  }
+  .indice a:hover { color: var(--inchiostro); border-bottom-color: var(--bordo); }
+  .indice .n { color: var(--debole); font-family: "IBM Plex Mono", monospace; font-size: .76rem; }
+
+  section { scroll-margin-top: 24px; }
+  section + section { margin-top: 52px; padding-top: 44px; border-top: 1px solid var(--filo); }
+
+  h2 {
+    margin: 0 0 4px;
+    font-family: Fraunces, Georgia, serif;
+    font-weight: 600;
+    font-size: 1.55rem;
+    letter-spacing: -.014em;
+    text-wrap: balance;
+  }
+  h2 .n {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .8rem;
+    font-weight: 400;
+    color: var(--rubrica);
+    margin-right: 10px;
+    vertical-align: .22em;
+  }
+  h3 {
+    margin: 30px 0 10px;
+    font-size: .74rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--debole);
+    font-weight: 600;
+  }
+  p { margin: 0 0 14px; max-width: 68ch; }
+  .guida { color: var(--tenue); }
+
+  /* ---------- ruoli ---------- */
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: .72rem;
+    font-weight: 500;
+    white-space: nowrap;
+    border: 1px solid transparent;
+  }
+  .pill::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+  .pill.lettore   { color: var(--lettore);   background: var(--lettore-velo);   border-color: color-mix(in srgb, var(--lettore) 26%, transparent); }
+  .pill.operatore { color: var(--operatore); background: var(--operatore-velo); border-color: color-mix(in srgb, var(--operatore) 26%, transparent); }
+  .pill.super     { color: var(--super);     background: var(--super-velo);     border-color: color-mix(in srgb, var(--super) 26%, transparent); }
+  .pill.tutti     { color: var(--tenue);     background: var(--rilievo);        border-color: var(--bordo); }
+
+  .ruoli { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); margin-top: 18px; }
+  .ruolo {
+    background: var(--superficie);
+    border: 1px solid var(--bordo);
+    padding: 16px 18px 18px;
+  }
+  .ruolo h4 { margin: 10px 0 8px; font-family: Fraunces, Georgia, serif; font-size: 1.08rem; font-weight: 600; }
+  .ruolo ul { margin: 0; padding-left: 17px; font-size: .88rem; color: var(--tenue); }
+  .ruolo li { margin-bottom: 4px; }
+  .ruolo li::marker { color: var(--debole); }
+
+  /* ---------- tabelle ---------- */
+
+  .scorre { overflow-x: auto; margin: 16px 0 0; }
+  table { border-collapse: collapse; width: 100%; font-size: .875rem; min-width: 500px; }
+  th, td { text-align: left; padding: 9px 14px 9px 0; border-bottom: 1px solid var(--filo); vertical-align: top; }
+  th {
+    font-size: .68rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--debole);
+    font-weight: 600;
+    border-bottom-color: var(--bordo);
+  }
+  td.mono { font-size: .82rem; white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: none; }
+
+  /* ---------- flussi ---------- */
+
+  .flusso { display: flex; flex-direction: column; gap: 0; margin-top: 16px; }
+  .passo {
+    display: grid;
+    grid-template-columns: 26px 1fr;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--filo);
+  }
+  .passo:last-child { border-bottom: none; }
+  .passo .num {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .76rem;
+    color: var(--rubrica);
+    padding-top: 2px;
+  }
+  .passo p { margin: 0; }
+  .passo .nota { margin-top: 3px; font-size: .85rem; color: var(--tenue); }
+
+  /* ---------- comandi ---------- */
+
+  .comando {
+    background: var(--superficie);
+    border: 1px solid var(--bordo);
+    padding: 14px 16px;
+    margin-top: 12px;
+  }
+  .comando .riga {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .84rem;
+    color: var(--inchiostro);
+    overflow-x: auto;
+    white-space: pre;
+    padding-bottom: 2px;
+  }
+  .comando .riga::before { content: "$ "; color: var(--debole); }
+  .comando .spiega { margin: 8px 0 0; font-size: .86rem; color: var(--tenue); }
+
+  /* ---------- avvisi ---------- */
+
+  .nota-box {
+    margin-top: 18px;
+    padding: 14px 18px;
+    background: var(--rilievo);
+    border: 1px solid var(--bordo);
+  }
+  .nota-box p { margin: 0; font-size: .89rem; }
+  .nota-box p + p { margin-top: 8px; }
+  .nota-box.attenzione { background: var(--rubrica-velo); border-color: color-mix(in srgb, var(--rubrica) 28%, transparent); }
+
+  .limite { display: grid; gap: 4px; padding: 14px 0; border-bottom: 1px solid var(--filo); }
+  .limite:last-of-type { border-bottom: none; }
+  .limite .cosa { font-family: "IBM Plex Mono", monospace; font-size: .84rem; color: var(--rubrica); }
+  .limite .come { font-size: .88rem; color: var(--tenue); margin: 0; }
+
+  footer {
+    margin-top: 60px;
+    padding-top: 22px;
+    border-top: 1px solid var(--bordo);
+    font-size: .82rem;
+    color: var(--debole);
+  }
+
+  @media (max-width: 860px) {
+    .corpo { grid-template-columns: 1fr; gap: 28px; }
+    .indice { position: static; border-bottom: 1px solid var(--bordo); padding-bottom: 16px; }
+    .indice ol { flex-direction: row; flex-wrap: wrap; gap: 4px 18px; }
+    .indice a { border-bottom: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="foglio">
+
+  <header class="testata">
+    <svg class="marchio" viewBox="0 0 24 32" width="30" height="40" aria-hidden="true">
+      <path d="M6 3h12v2.4H6z" fill="currentColor"></path>
+      <path d="M10.8 5.4h2.4v5.1h-2.4z" fill="currentColor"></path>
+      <path d="M6.4 10.5h11.2V29l-5.6-4.9L6.4 29z" fill="var(--rubrica)"></path>
+    </svg>
+    <div>
+      <h1 class="titolone">Incipit</h1>
+      <p class="sottotitolo">Il catalogo della biblioteca: com'è fatto, chi vede cosa, e come si registra un prestito.</p>
+    </div>
+  </header>
+
+  <div class="tesi">
+    <p><strong>La cosa da capire prima di tutte le altre:</strong> il backend modella il <em>bancone di una biblioteca</em>, non un negozio online. Un lettore non si presta un libro da solo — lo registra il personale. Tutto il resto dell'interfaccia discende da qui.</p>
+  </div>
+
+  <div class="corpo">
+
+    <nav class="indice" aria-label="Indice">
+      <p class="indice-et">Indice</p>
+      <ol>
+        <li><a href="#ruoli"><span class="n">01</span><span>I tre ruoli</span></a></li>
+        <li><a href="#pagine"><span class="n">02</span><span>Le pagine</span></a></li>
+        <li><a href="#prestito"><span class="n">03</span><span>Prestare un libro</span></a></li>
+        <li><a href="#tessera"><span class="n">04</span><span>La tessera</span></a></li>
+        <li><a href="#liste"><span class="n">05</span><span>Le due liste</span></a></li>
+        <li><a href="#comandi"><span class="n">06</span><span>I comandi</span></a></li>
+        <li><a href="#browser"><span class="n">07</span><span>Cosa resta nel browser</span></a></li>
+        <li><a href="#limiti"><span class="n">08</span><span>Limiti del backend</span></a></li>
+        <li><a href="#demo"><span class="n">09</span><span>Il giro da mostrare</span></a></li>
+      </ol>
+    </nav>
+
+    <main>
+
+      <section id="ruoli">
+        <h2><span class="n">01</span>I tre ruoli</h2>
+        <p class="guida">Il ruolo decide cosa compare nel menu e quali pulsanti esistono. Non è una questione estetica: rispecchia i permessi che il backend applica davvero, quindi non troverai mai un pulsante che risponde “non autorizzato”.</p>
+
+        <div class="ruoli">
+          <article class="ruolo">
+            <span class="pill lettore">Lettore</span>
+            <h4>Chi si registra</h4>
+            <ul>
+              <li>Sfoglia e cerca nel catalogo</li>
+              <li>Tiene una lista <em>Da leggere</em></li>
+              <li>Vede i propri prestiti e le scadenze</li>
+              <li>Ha una tessera nel profilo</li>
+            </ul>
+          </article>
+
+          <article class="ruolo">
+            <span class="pill operatore">Admin</span>
+            <h4>Il bibliotecario</h4>
+            <ul>
+              <li>Tutto quello che fa il lettore</li>
+              <li>Registra, chiude ed estende prestiti</li>
+              <li>Aggiunge libri, copie e generi</li>
+              <li>Consulta la scheda di un iscritto</li>
+            </ul>
+          </article>
+
+          <article class="ruolo">
+            <span class="pill super">SuperUser</span>
+            <h4>Chi comanda</h4>
+            <ul>
+              <li>Tutto quello che fa l'Admin</li>
+              <li>Cambia le regole di prestito</li>
+              <li>Promuove e revoca gli Admin</li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="nota-box attenzione">
+          <p><strong>Non ci si registra come Admin.</strong> Il modulo di registrazione assegna sempre <em>Lettore</em>. L'Admin nasce per promozione, e solo un SuperUser può promuovere. Il SuperUser è uno solo, creato all'avvio del backend dalle variabili d'ambiente.</p>
+          <p>Dopo una promozione la persona deve <strong>uscire e rientrare</strong>: il ruolo viaggia dentro il token di sessione, e quello vecchio viene invalidato.</p>
+        </div>
+      </section>
+
+      <section id="pagine">
+        <h2><span class="n">02</span>Le pagine</h2>
+        <p class="guida">Dieci schermate. La colonna a destra dice chi le vede.</p>
+
+        <div class="scorre">
+          <table>
+            <thead>
+              <tr><th>Indirizzo</th><th>Cosa contiene</th><th>Chi</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="mono">/</td><td>Copertina, con il manifesto che si scopre scorrendo</td><td><span class="pill tutti">Chiunque</span></td></tr>
+              <tr><td class="mono">/catalogo</td><td>Ricerca, ordinamento, filtri, 24 titoli per pagina</td><td><span class="pill tutti">Chiunque</span></td></tr>
+              <tr><td class="mono">/libro/:id</td><td>Scheda; la copertina si apre in 3D</td><td><span class="pill tutti">Chiunque</span></td></tr>
+              <tr><td class="mono">/accedi</td><td>Login</td><td><span class="pill tutti">Chiunque</span></td></tr>
+              <tr><td class="mono">/registrati</td><td>Nuovo account, sempre come Lettore</td><td><span class="pill tutti">Chiunque</span></td></tr>
+              <tr><td class="mono">/da-leggere</td><td>Lista personale, salvata sul dispositivo</td><td><span class="pill lettore">Lettore</span></td></tr>
+              <tr><td class="mono">/prestiti</td><td>I propri prestiti, con avviso sulle scadenze</td><td><span class="pill tutti">Chi ha un account</span></td></tr>
+              <tr><td class="mono">/profilo</td><td>Anagrafica, tessera, statistiche, consigli, storico</td><td><span class="pill tutti">Chi ha un account</span></td></tr>
+              <tr><td class="mono">/banco</td><td>La pila da registrare per un iscritto</td><td><span class="pill operatore">Admin</span></td></tr>
+              <tr><td class="mono">/amministrazione</td><td>Prestiti, iscritti, catalogo, regole, ruoli</td><td><span class="pill operatore">Admin</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="nota-box">
+          <p>Il menu in alto cambia con il ruolo. Il lettore vede <strong>Da leggere</strong> con un segnalibro; l'operatore vede <strong>Banco</strong> con due libri aperti e, in più, <strong>Gestione</strong>. Se non trovi una voce, quasi sempre è perché sei entrata con l'account sbagliato.</p>
+        </div>
+      </section>
+
+      <section id="prestito">
+        <h2><span class="n">03</span>Prestare un libro</h2>
+        <p class="guida">Due strade, stesso risultato: una registrazione per libro. Servono le credenziali di un Admin.</p>
+
+        <h3>Strada lunga — il banco</h3>
+        <p>Per quando l'iscritto arriva con una pila di libri.</p>
+        <div class="flusso">
+          <div class="passo"><span class="num">1</span><div><p>Scegli chi stai servendo</p><p class="nota">Da <strong>Gestione → Iscritti</strong>, oppure direttamente nel campo del banco. Appare una barra rossa in alto che ti segue su tutte le pagine.</p></div></div>
+          <div class="passo"><span class="num">2</span><div><p>Vai nel catalogo e premi <strong>Porta al banco</strong></p><p class="nota">La copertina vola verso l'icona in alto. Ripeti per ogni libro.</p></div></div>
+          <div class="passo"><span class="num">3</span><div><p>Apri il <strong>Banco</strong> e scegli la durata</p><p class="nota">Breve, media o lunga. I giorni corrispondenti sono fra le regole modificabili dal SuperUser.</p></div></div>
+          <div class="passo"><span class="num">4</span><div><p>Premi <strong>Registra</strong></p><p class="nota">Una chiamata per libro. Se un titolo ha finito le copie viene segnalato, ma gli altri passano lo stesso.</p></div></div>
+        </div>
+
+        <h3>Strada corta — dalla scheda</h3>
+        <p>Per un libro solo.</p>
+        <div class="flusso">
+          <div class="passo"><span class="num">1</span><div><p>Apri la scheda del libro e premi <strong>Presta subito</strong></p></div></div>
+          <div class="passo"><span class="num">2</span><div><p>Scegli l'iscritto e la durata, poi registra</p><p class="nota">Se stavi già servendo qualcuno, è già selezionato. Le copie disponibili si aggiornano subito.</p></div></div>
+        </div>
+
+        <div class="nota-box">
+          <p>Quando selezioni un iscritto, l'app ti avvisa se ha già libri in ritardo. È l'informazione che serve prima di prestargliene altri.</p>
+        </div>
+      </section>
+
+      <section id="tessera">
+        <h2><span class="n">04</span>La tessera</h2>
+        <p>Nel profilo di ogni lettore c'è una tessera con nome, anno di iscrizione e un codice. Cliccando il codice si copia.</p>
+        <p>Serve perché l'operatore deve identificare chi ha davanti, e l'elenco che vede contiene <strong>solo chi ha già avuto almeno un prestito</strong>. Per un iscritto nuovo, la tessera è l'unico modo di trovarlo: si incolla il codice nel campo di ricerca e compare il pulsante <em>Usa tessera</em>.</p>
+        <p class="guida">Dopo il primo prestito quella persona resta in elenco, e la tessera non serve più.</p>
+      </section>
+
+      <section id="liste">
+        <h2><span class="n">05</span>Le due liste</h2>
+        <p>La stessa meccanica — raccogli libri, li vedi in una lista — ha due significati diversi a seconda di chi sei.</p>
+
+        <div class="scorre">
+          <table>
+            <thead><tr><th>Ruolo</th><th>Si chiama</th><th>Vuol dire</th></tr></thead>
+            <tbody>
+              <tr><td><span class="pill lettore">Lettore</span></td><td>Da leggere</td><td>Un promemoria personale. Non prenota niente, resta su quel dispositivo.</td></tr>
+              <tr><td><span class="pill operatore">Admin</span></td><td>Banco</td><td>La pila che l'iscritto sta per prendere in prestito.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="nota-box attenzione">
+          <p><strong>Sono due liste separate.</strong> I libri messi da parte come lettore non compaiono nel banco, e viceversa. Se in una delle due c'è qualcosa, in cima all'altra compare un avviso con il pulsante per spostarli.</p>
+        </div>
+      </section>
+
+      <section id="comandi">
+        <h2><span class="n">06</span>I comandi</h2>
+        <p class="guida">Si lanciano dalla cartella <code>fe</code>, con il backend acceso.</p>
+
+        <div class="comando">
+          <div class="riga">npm run dev</div>
+          <p class="spiega">Avvia il sito su <code>localhost:5173</code>. Il backend va acceso a parte, dalla cartella <code>be</code>.</p>
+        </div>
+
+        <div class="comando">
+          <div class="riga">npm run semina</div>
+          <p class="spiega">Riempie il catalogo: 187 libri e 28 generi, con copertine reali. Serve perché il backend all'avvio crea solo ruoli, regole e SuperUser — nessun libro. Rilanciarlo non crea doppioni.</p>
+        </div>
+
+        <div class="comando">
+          <div class="riga">npm run utenti</div>
+          <p class="spiega">Crea gli account di prova per i tre ruoli e promuove l'Admin. È il comando da lanciare prima di una dimostrazione.</p>
+        </div>
+
+        <div class="comando">
+          <div class="riga">npm run promuovi -- --elenca</div>
+          <p class="spiega">Mostra tutti gli iscritti con il loro codice e i loro ruoli. È l'unico modo di vedere l'elenco completo.</p>
+        </div>
+
+        <div class="comando">
+          <div class="riga">npm run promuovi -- --email mario@rossi.it</div>
+          <p class="spiega">Promuove quella persona ad Admin. Con <code>--revoca</code> fa il contrario. Dopo, deve rifare il login.</p>
+        </div>
+
+        <div class="comando">
+          <div class="riga">npm run verifica</div>
+          <p class="spiega">Ripercorre tutto il giro contro il backend — catalogo, ricerca, registrazione, login, permessi, prestito, restituzione — e dice cosa non funziona. Utile subito dopo un deploy.</p>
+        </div>
+      </section>
+
+      <section id="browser">
+        <h2><span class="n">07</span>Cosa resta nel browser</h2>
+        <p>Sei cose sopravvivono al ricaricamento della pagina, salvate nel browser e non sul server. Cambiando computer, o aprendo una finestra anonima, ricominciano da zero.</p>
+
+        <div class="scorre">
+          <table>
+            <thead><tr><th>Chiave</th><th>Cosa conserva</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">incipit-token</td><td>La sessione: è per questo che resti dentro dopo un refresh</td></tr>
+              <tr><td class="mono">incipit-tema</td><td>La scelta fra chiaro e scuro</td></tr>
+              <tr><td class="mono">incipit-salvati</td><td>La lista <em>Da leggere</em> del lettore</td></tr>
+              <tr><td class="mono">incipit-banco</td><td>La pila di libri al banco</td></tr>
+              <tr><td class="mono">incipit-iscritto-servito</td><td>Chi l'operatore sta servendo in questo momento</td></tr>
+              <tr><td class="mono">incipit-iscritti-recenti</td><td>Le ultime persone servite, per ritrovarle senza tessera</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="limiti">
+        <h2><span class="n">08</span>Limiti del backend</h2>
+        <p class="guida">Tre cose che il backend non espone. Non sono bug del sito: sono funzioni che non esistono, e l'interfaccia ci gira attorno.</p>
+
+        <div class="limite">
+          <span class="cosa">Nessun elenco degli iscritti</span>
+          <p class="come">L'operatore vede solo chi ha già avuto un prestito, ricostruito dallo storico. Per gli altri serve la tessera, o il comando <code>--elenca</code>.</p>
+        </div>
+
+        <div class="limite">
+          <span class="cosa">Nessuna modifica del profilo</span>
+          <p class="come">I dati personali si possono solo leggere. Il profilo non ha un modulo di modifica: uno che non può salvare sarebbe peggio di nessuno.</p>
+        </div>
+
+        <div class="limite">
+          <span class="cosa">Nessun recupero del singolo libro</span>
+          <p class="come">Aprendo una scheda dal catalogo i dati arrivano insieme al collegamento. Aprendola da un indirizzo diretto, il sito scorre il catalogo per ritrovarla — funziona, ma è più lento.</p>
+        </div>
+      </section>
+
+      <section id="demo">
+        <h2><span class="n">09</span>Il giro da mostrare</h2>
+        <p class="guida">Sette minuti, e si vedono tutti e tre i ruoli.</p>
+
+        <div class="flusso">
+          <div class="passo"><span class="num">1</span><div><p>Apri la copertina e scorri</p><p class="nota">Il manifesto si scopre parola per parola. Poi entra nel catalogo: filtri, ordinamento, le copertine che si inclinano.</p></div></div>
+          <div class="passo"><span class="num">2</span><div><p>Entra come <strong>lettore</strong></p><p class="nota">Salva due o tre titoli in <em>Da leggere</em>. Vai nel profilo e mostra la tessera: copia il codice.</p></div></div>
+          <div class="passo"><span class="num">3</span><div><p>Esci ed entra come <strong>bibliotecario</strong></p><p class="nota">Fai notare che il menu è cambiato: compaiono Banco e Gestione.</p></div></div>
+          <div class="passo"><span class="num">4</span><div><p>Porta due libri al banco e incolla la tessera</p><p class="nota">Scegli la durata e registra. Qui si vede il volo della copertina e il contatore che scatta.</p></div></div>
+          <div class="passo"><span class="num">5</span><div><p>Torna nel lettore</p><p class="nota">I libri sono in <em>Prestiti</em> con le scadenze. Il cerchio si chiude.</p></div></div>
+          <div class="passo"><span class="num">6</span><div><p>Se avanza tempo, entra come <strong>SuperUser</strong></p><p class="nota">Gestione → Regole: cambia la durata del prestito medio e mostra che il prossimo prestito la rispetta.</p></div></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <footer>
+    Incipit — React 19, Vite, Tailwind 4, react-router 8, Motion 13, su backend Spring Boot e PostgreSQL.
+    Copertine per gentile concessione di <a href="https://openlibrary.org" target="_blank" rel="noreferrer noopener">Open Library</a>.
+  </footer>
+
+</div>

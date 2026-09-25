@@ -1,35 +1,40 @@
 import { AnimatePresence, arc, motion, useAnimate, useReducedMotion } from 'motion/react'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useSessione } from '@/components/Sessione'
 
-// Il "banco" e' il bancone della biblioteca: ci appoggi i libri che vuoi
-// portare via, poi li registri tutti insieme.
+// Una sola meccanica di raccolta, due significati diversi a seconda di chi guarda:
 //
-// Non e' un carrello per vezzo: POST /api/prestiti/NewPrestito vuole
-// hasAnyRole('Admin','SuperUser') e un userId nel corpo, cioe' e' l'operatore
-// che apre il prestito per conto di qualcuno. Un utente normale non puo'
-// aprirselo da solo, quindi la raccolta resta locale e la registrazione
-// avviene al banco.
+//   operatore -> "il banco": la pila di libri che l'iscritto ha portato al
+//                bancone e che sta per prendere in prestito.
+//   lettore   -> "da leggere": un promemoria personale. Non prenota niente,
+//                non promette niente, e vive solo in questo browser.
+//
+// Tenerli separati non e' un vezzo: il prestito e' un atto dell'operatore
+// (NewPrestito vuole Admin o SuperUser), e mostrare a un lettore un pulsante
+// che somiglia a "prendi in prestito" e' una promessa che il sistema non puo'
+// mantenere.
 
-const CHIAVE = 'incipit-banco'
+const CHIAVI = { banco: 'incipit-banco', salvati: 'incipit-salvati' }
+const CHIAVE_SERVITO = 'incipit-iscritto-servito'
 
 // arc() va creato una volta sola: la sua continuita' vive in una closure,
 // una nuova istanza a ogni render perderebbe memoria fra un volo e l'altro.
 const ARCO = arc({ strength: 0.65, peak: 0.42, rotate: 0.35 })
 
 const DURATA_VOLO = 0.78
-const MISURA_ARRIVO = 22 // a quanti px si riduce la copertina sul banco
+const MISURA_ARRIVO = 22
 
-const ContestoBanco = createContext(null)
+const ContestoRaccolta = createContext(null)
 
-export function useBanco() {
-  const contesto = useContext(ContestoBanco)
-  if (!contesto) throw new Error('useBanco va usato dentro <ProviderBanco>')
+export function useRaccolta() {
+  const contesto = useContext(ContestoRaccolta)
+  if (!contesto) throw new Error('useRaccolta va usato dentro <ProviderRaccolta>')
   return contesto
 }
 
-function leggiSalvati() {
+function leggiSalvati(chiave) {
   try {
-    const grezzo = localStorage.getItem(CHIAVE)
+    const grezzo = localStorage.getItem(chiave)
     const lista = grezzo ? JSON.parse(grezzo) : []
     return Array.isArray(lista) ? lista : []
   } catch {
@@ -37,45 +42,107 @@ function leggiSalvati() {
   }
 }
 
-export function ProviderBanco({ children }) {
+export function ProviderRaccolta({ children }) {
   const motoRidotto = useReducedMotion()
+  const { operatore } = useSessione()
 
-  const [libri, setLibri] = useState(leggiSalvati)
+  // Il modo segue il ruolo: chi puo' aprire prestiti ha il banco, gli altri
+  // hanno la lista personale. Due chiavi distinte, cosi' passando da un
+  // account all'altro le due liste non si mescolano.
+  const modo = operatore ? 'banco' : 'salvati'
+  const chiave = CHIAVI[modo]
+
+  // In stato tengo SOLO la lista attiva. Tenerle tutte e due era il bug:
+  // venivano lette una volta sola al montaggio, e al cambio di ruolo l'effetto
+  // scriveva su disco la copia vecchia e vuota, cancellando l'altra lista.
+  const [libri, setLibri] = useState(() => leggiSalvati(CHIAVI[modo]))
   const [voli, setVoli] = useState([])
   const [colpi, setColpi] = useState(0)
+  const [altra, setAltra] = useState(() => leggiSalvati(CHIAVI[modo === 'banco' ? 'salvati' : 'banco']).length)
 
-  // Il bersaglio del volo: lo registra l'icona nell'header.
+  // Chi stiamo servendo al banco. Sta qui e non dentro una pagina perche' in
+  // biblioteca decidi prima chi hai davanti, poi giri fra gli scaffali: la
+  // scelta deve sopravvivere alla navigazione.
+  const [iscritto, setIscritto] = useState(() => {
+    try {
+      const g = localStorage.getItem(CHIAVE_SERVITO)
+      return g ? JSON.parse(g) : null
+    } catch {
+      return null
+    }
+  })
+
+  const servi = useCallback((utente) => {
+    setIscritto(utente)
+    try {
+      if (utente) localStorage.setItem(CHIAVE_SERVITO, JSON.stringify(utente))
+      else localStorage.removeItem(CHIAVE_SERVITO)
+    } catch {
+      // vale per questa sessione
+    }
+  }, [])
+
+  const modoCorrente = useRef(modo)
   const bersaglio = useRef(null)
   const prossimoVolo = useRef(0)
 
   useEffect(() => {
-    try {
-      localStorage.setItem(CHIAVE, JSON.stringify(libri))
-    } catch {
-      // niente spazio o navigazione privata: il banco vale per questa sessione
+    if (modoCorrente.current !== modo) {
+      // Il ruolo e' cambiato, quindi la lista attiva e' un'altra: va RILETTA
+      // dal disco, mai sovrascritta con quella di prima.
+      modoCorrente.current = modo
+      setLibri(leggiSalvati(CHIAVI[modo]))
+      setAltra(leggiSalvati(CHIAVI[modo === 'banco' ? 'salvati' : 'banco']).length)
+      return
     }
-  }, [libri])
+
+    try {
+      localStorage.setItem(chiave, JSON.stringify(libri))
+    } catch {
+      // niente spazio o navigazione privata: vale per questa sessione
+    }
+  }, [libri, modo, chiave])
 
   const registraBersaglio = useCallback((elemento) => {
     bersaglio.current = elemento
   }, [])
 
   const rimuovi = useCallback((idLibro) => {
-    setLibri((correnti) => correnti.filter((l) => l.id !== idLibro))
+    setLibri((correnti) => correnti.filter((x) => x.id !== idLibro))
   }, [])
 
   const svuota = useCallback(() => setLibri([]), [])
+
+  // Ponte fra le due liste: chi diventa operatore ritrova quello che aveva
+  // messo da parte da lettore, invece di vederlo sparire.
+  const importaDaAltra = useCallback(() => {
+    const altraChiave = CHIAVI[modo === 'banco' ? 'salvati' : 'banco']
+    const daImportare = leggiSalvati(altraChiave)
+    if (!daImportare.length) return 0
+
+    setLibri((correnti) => {
+      const presenti = new Set(correnti.map((x) => x.id))
+      return [...correnti, ...daImportare.filter((x) => !presenti.has(x.id))]
+    })
+    try {
+      localStorage.setItem(altraChiave, '[]')
+    } catch {
+      // se non si puo' svuotare, pazienza: i doppioni sono filtrati sopra
+    }
+    setAltra(0)
+    return daImportare.length
+  }, [modo])
 
   const aggiungi = useCallback(
     (libro, elementoOrigine) => {
       let giaPresente = false
       setLibri((correnti) => {
-        if (correnti.some((l) => l.id === libro.id)) {
+        if (correnti.some((x) => x.id === libro.id)) {
           giaPresente = true
           return correnti
         }
-        // Teniamo solo i campi che servono a ridisegnarlo: l'oggetto finisce
-        // in localStorage e non ha senso portarsi dietro tutto il DTO.
+        // Solo i campi che servono a ridisegnarlo: finisce in localStorage e
+        // non ha senso portarsi dietro tutto il DTO.
         const { id, titolo, autore, isbn, path, genere, copieDisponibili } = libro
         return [...correnti, { id, titolo, autore, isbn, path, genere, copieDisponibili }]
       })
@@ -102,7 +169,7 @@ export function ProviderBanco({ children }) {
             width: partenza.width,
             height: partenza.height,
           },
-          // Si muove per centri, altrimenti con scale diverse l'arrivo e' storto.
+          // Si muove per centri: con scale molto diverse l'arrivo verrebbe storto.
           dx: destinazione.left + destinazione.width / 2 - (partenza.left + partenza.width / 2),
           dy: destinazione.top + destinazione.height / 2 - (partenza.top + partenza.height / 2),
           scala: MISURA_ARRIVO / partenza.width,
@@ -121,29 +188,36 @@ export function ProviderBanco({ children }) {
 
   const valore = useMemo(
     () => ({
+      modo,
+      operatore,
       libri,
       quantita: libri.length,
-      contiene: (idLibro) => libri.some((l) => l.id === idLibro),
+      contiene: (idLibro) => libri.some((x) => x.id === idLibro),
       aggiungi,
       rimuovi,
       svuota,
       registraBersaglio,
       colpi,
+      // quanti titoli sono rimasti nell'altra lista (quella dell'altro ruolo)
+      altrove: altra,
+      importaDaAltra,
+      // l'iscritto che l'operatore sta servendo, valido su tutte le pagine
+      iscritto: operatore ? iscritto : null,
+      servi,
     }),
-    [libri, aggiungi, rimuovi, svuota, registraBersaglio, colpi],
+    [modo, operatore, libri, aggiungi, rimuovi, svuota, registraBersaglio, colpi, altra, importaDaAltra, iscritto, servi],
   )
 
   return (
-    <ContestoBanco.Provider value={valore}>
+    <ContestoRaccolta.Provider value={valore}>
       {children}
 
-      {/* I libri in volo stanno sopra a tutto, header compreso. */}
       <div className="pointer-events-none fixed inset-0 z-[60]" aria-hidden="true">
         {voli.map((volo) => (
           <LibroInVolo key={volo.id} volo={volo} onFine={() => concludiVolo(volo.id)} />
         ))}
       </div>
-    </ContestoBanco.Provider>
+    </ContestoRaccolta.Provider>
   )
 }
 
@@ -171,8 +245,8 @@ function LibroInVolo({ volo, onFine }) {
   )
 }
 
-// Volutamente senza <img>: la copertina vola per meno di un secondo e non vale
-// una richiesta a Open Library (che e' limitata a 100 ogni 5 minuti).
+// Volutamente senza <img>: vola per meno di un secondo e non vale una
+// richiesta di rete.
 function MiniCopertina({ libro }) {
   let hash = 0
   const seme = libro.genere || libro.titolo || 'incipit'
@@ -193,16 +267,15 @@ function MiniCopertina({ libro }) {
   )
 }
 
-// L'icona nell'header: riceve il colpo, mostra l'onda e il contatore.
-export function IconaBanco() {
-  const { quantita, colpi, registraBersaglio } = useBanco()
+export function IconaRaccolta() {
+  const { quantita, colpi, registraBersaglio, modo } = useRaccolta()
   const motoRidotto = useReducedMotion()
   const [scope, animate] = useAnimate()
   const primoRender = useRef(true)
 
   useEffect(() => {
-    // Al montaggio colpi vale 0: senza questa guardia l'icona rimbalzerebbe
-    // a ogni ricaricamento della pagina.
+    // Al montaggio colpi vale 0: senza guardia l'icona rimbalzerebbe a ogni
+    // ricaricamento della pagina.
     if (primoRender.current) {
       primoRender.current = false
       return
@@ -219,7 +292,6 @@ export function IconaBanco() {
     <div ref={scope} className="relative">
       <span ref={registraBersaglio} className="absolute inset-0" aria-hidden="true" />
 
-      {/* l'onda che si allarga a ogni libro incassato */}
       <AnimatePresence>
         {colpi > 0 && (
           <motion.span
@@ -234,10 +306,7 @@ export function IconaBanco() {
         )}
       </AnimatePresence>
 
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M4 5.2A1.2 1.2 0 0 1 5.2 4H9a2 2 0 0 1 2 2v13a1.6 1.6 0 0 0-1.6-1.6H4Z" />
-        <path d="M20 5.2A1.2 1.2 0 0 0 18.8 4H15a2 2 0 0 0-2 2v13a1.6 1.6 0 0 1 1.6-1.6H20Z" />
-      </svg>
+      {modo === 'banco' ? <IconaLibri /> : <IconaSegnalibro />}
 
       <AnimatePresence>
         {quantita > 0 && (
@@ -248,7 +317,6 @@ export function IconaBanco() {
             exit={{ scale: 0, opacity: 0 }}
             transition={{ type: 'spring', bounce: 0.55, duration: 0.5 }}
           >
-            {/* key sulla quantita': il numero scatta a ogni incremento */}
             <motion.span
               key={quantita}
               initial={{ y: -7, opacity: 0 }}
@@ -261,5 +329,22 @@ export function IconaBanco() {
         )}
       </AnimatePresence>
     </div>
+  )
+}
+
+function IconaLibri() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 5.2A1.2 1.2 0 0 1 5.2 4H9a2 2 0 0 1 2 2v13a1.6 1.6 0 0 0-1.6-1.6H4Z" />
+      <path d="M20 5.2A1.2 1.2 0 0 0 18.8 4H15a2 2 0 0 0-2 2v13a1.6 1.6 0 0 1 1.6-1.6H20Z" />
+    </svg>
+  )
+}
+
+function IconaSegnalibro() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M6.5 4h11a1 1 0 0 1 1 1v15l-6.5-4.6L5.5 20V5a1 1 0 0 1 1-1Z" />
+    </svg>
   )
 }

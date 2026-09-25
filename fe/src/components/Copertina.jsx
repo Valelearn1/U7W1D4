@@ -159,9 +159,11 @@ export default function Copertina({ libro, dimensione = 'L', inclina = false, ri
   const [caricata, setCaricata] = useState(false)
   const sorgente = sorgenti[tentativo] ?? null
 
-  // Posizione del puntatore in coordinate -0.5..0.5 sul riquadro.
-  const px = useMotionValue(0)
-  const py = useMotionValue(0)
+  // Posizione del puntatore, in percentuale sul riquadro. Inizializzate al
+  // CENTRO: partendo da 0 il riflesso resta inchiodato all'angolo in alto a
+  // sinistra e sbianca tutta la copertina finche' non ci passi sopra.
+  const px = useMotionValue(50)
+  const py = useMotionValue(50)
   const molla = { stiffness: 220, damping: 22, mass: 0.6 }
   // Inizializzati con un numero, non con un MotionValue: una molla agganciata
   // a una sorgente insegue quella e ignora i .set() imperativi.
@@ -171,6 +173,10 @@ export default function Copertina({ libro, dimensione = 'L', inclina = false, ri
   // Il riflesso segue il puntatore: e' quello che fa leggere la superficie
   // come lucida invece che piatta.
   const luce = useMotionTemplate`radial-gradient(130% 90% at ${px}% ${py}%, rgb(255 255 255 / 0.22), transparent 55%)`
+
+  // Il riflesso esiste solo mentre il puntatore e' sopra: una superficie
+  // lucida senza nessuno davanti non ha nessun riflesso da mostrare.
+  const luceOpacita = useSpring(0, { stiffness: 180, damping: 26 })
 
   const attivo = inclina && !motoRidotto
 
@@ -183,6 +189,7 @@ export default function Copertina({ libro, dimensione = 'L', inclina = false, ri
     py.set(y * 100)
     rotY.set((x - 0.5) * 16)
     rotX.set((0.5 - y) * 12)
+    luceOpacita.set(1)
   }
 
   function esci() {
@@ -191,6 +198,7 @@ export default function Copertina({ libro, dimensione = 'L', inclina = false, ri
     rotY.set(0)
     px.set(50)
     py.set(50)
+    luceOpacita.set(0)
   }
 
   return (
@@ -253,7 +261,7 @@ export default function Copertina({ libro, dimensione = 'L', inclina = false, ri
         {attivo && (
           <motion.div
             className="pointer-events-none absolute inset-0"
-            style={{ backgroundImage: luce }}
+            style={{ backgroundImage: luce, opacity: luceOpacita }}
             aria-hidden="true"
           />
         )}

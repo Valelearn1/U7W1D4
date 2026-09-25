@@ -85,7 +85,7 @@ il JWT e `RuoloService` revoca i token attivi.
 |---|---|
 | Catalogo, ricerca, scheda libro | chiunque, anche anonimo |
 | Elenco generi, propri prestiti, profilo | autenticato |
-| Aprire/chiudere/estendere prestiti, nuovo libro, nuovo genere, leggere le regole | Admin |
+| Aprire/chiudere/estendere prestiti, nuovo libro, nuovo genere, leggere le regole, scheda iscritto | Admin |
 | Modificare le regole, promuovere Admin, creare ruoli | SuperUser |
 
 ## Il frontend
@@ -95,16 +95,32 @@ il JWT e `RuoloService` revoca i token attivi.
 | `/` | landing, manifesto che si scopre con lo scroll |
 | `/catalogo` | ricerca, filtro per genere e disponibilita', paginazione |
 | `/libro/:id` | scheda, con il libro che si apre in 3D |
-| `/prestiti` | il banco (titoli raccolti) e i prestiti attivi |
-| `/profilo` | anagrafica, statistiche e storico dei prestiti |
-| `/amministrazione` | riservata: prestiti, catalogo, regole, ruoli |
+| `/da-leggere` | lista personale del lettore (solo su quel browser) |
+| `/banco` | riservata: la pila da registrare, un iscritto alla volta |
+| `/prestiti` | i propri prestiti, con scadenze |
+| `/profilo` | anagrafica, tessera, statistiche, consigli, storico |
+| `/amministrazione` | riservata: prestiti, iscritti, catalogo, regole, ruoli |
 | `/accedi`, `/registrati` | autenticazione JWT |
 
-**Il banco, non il carrello.** `POST /api/prestiti/NewPrestito` richiede
-`Admin` o `SuperUser` e un `userId` nel corpo: e' l'operatore che apre il
-prestito per conto di qualcuno, non l'utente che se lo apre da solo. Percio' il
-frontend raccoglie i titoli lato client (localStorage) e la registrazione vera
-avviene dal banco, con le credenziali di un operatore.
+### Chi vede cosa
+
+`POST /api/prestiti/NewPrestito` richiede `Admin` o `SuperUser` e un `userId`
+nel corpo: e' l'operatore che apre il prestito per conto di qualcuno. Il
+frontend rispecchia questo, invece di fingere il contrario.
+
+**Il lettore** consulta il catalogo, tiene una lista *Da leggere* (localStorage,
+solo su quel dispositivo, non prenota nulla), vede i propri prestiti e le
+scadenze, e ha una **tessera** nel profilo: il codice che l'operatore usa per
+identificarlo. Nessun pulsante che somigli a "prendi in prestito".
+
+**L'operatore** ha due strade, entrambe una registrazione per libro:
+- **il banco** (`/banco`), per quando l'iscritto porta una pila: si sceglie
+  l'iscritto una volta e si registra tutto;
+- **Presta subito**, dalla scheda del singolo libro.
+
+Il selettore dell'iscritto ricostruisce l'elenco da `AllPrestiti` piu' una
+cache locale di chi e' gia' passato, e accetta il codice della tessera: serve
+perche' il backend non espone nessun elenco degli utenti.
 
 ## Deploy su Render
 
@@ -158,16 +174,21 @@ fe/
   src/lib/api.js            fetch, token JWT e traduzione degli errori
   src/lib/tema.js           tema chiaro/scuro
   src/components/
-    Layout.jsx              header, logo cliccabile, menu, tema, sessione
+    Layout.jsx              header, logo cliccabile, menu per ruolo, tema
     Logo.jsx                la I col segnalibro, si disegna da sola
     Sessione.jsx            login, logout, ruoli
-    Banco.jsx               raccolta dei titoli e volo della copertina
+    Raccolta.jsx            banco (operatore) o Da leggere (lettore) + volo
+    SelettoreIscritto.jsx   ricerca iscritto e lettura della tessera
+    Tessera.jsx             la tessera con il codice dell'iscritto
     Prestiti.jsx            prestiti attivi, restituzione ed estensione
+    AvvisoScadenze.jsx      banner per ritardi e scadenze vicine
+    Consigli.jsx            proposte dagli autori gia' letti
     Copertina.jsx           path -> Open Library per ISBN -> copertina generata
     Toast.jsx               notifiche impilate
     Scheletro.jsx           placeholder con luccichio
     RivelaTesto.jsx         testo che si scopre con lo scroll
-  src/pages/                Home, Catalogo, Libro, Banco, Profilo,
-                            Amministrazione, Accedi, Registrati
+  src/pages/                Home, Catalogo, Libro, Banco, DaLeggere,
+                            Prestiti, Profilo, Amministrazione,
+                            Accedi, Registrati
   .env.example
 ```

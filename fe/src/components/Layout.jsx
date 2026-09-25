@@ -3,7 +3,8 @@ import { useState } from 'react'
 import { NavLink, Outlet, Link, useLocation, useNavigate } from 'react-router'
 import Logo from '@/components/Logo'
 import ToggleTema from '@/components/ToggleTema'
-import { IconaBanco } from '@/components/Banco'
+import { IconaRaccolta, useRaccolta } from '@/components/Raccolta'
+import BarraServizio from '@/components/BarraServizio'
 import { useSessione } from '@/components/Sessione'
 import { useToast } from '@/components/Toast'
 
@@ -34,6 +35,28 @@ function VoceMenu({ to, children }) {
       )}
     </NavLink>
   )
+}
+
+// La stessa icona porta a due posti diversi: il banco per chi registra i
+// prestiti, la lista personale per chi legge e basta.
+function VoceRaccolta() {
+  const { modo } = useRaccolta()
+  const banco = modo === 'banco'
+
+  return (
+    <VoceMenu to={banco ? '/banco' : '/da-leggere'}>
+      <span className="flex items-center gap-2.5">
+        <span className="hidden sm:inline">{banco ? 'Banco' : 'Da leggere'}</span>
+        <IconaRaccolta />
+      </span>
+    </VoceMenu>
+  )
+}
+
+function VocePrestiti() {
+  const { autenticato } = useSessione()
+  if (!autenticato) return null
+  return <VoceMenu to="/prestiti">Prestiti</VoceMenu>
 }
 
 // Il link all'area riservata compare solo a chi ci puo' entrare: le rotte
@@ -121,12 +144,8 @@ export default function Layout() {
 
           <nav className="ml-auto flex items-center gap-5">
             <VoceMenu to="/catalogo">Catalogo</VoceMenu>
-            <VoceMenu to="/prestiti">
-              <span className="flex items-center gap-2.5">
-                <span className="hidden sm:inline">Banco</span>
-                <IconaBanco />
-              </span>
-            </VoceMenu>
+            <VoceRaccolta />
+            <VocePrestiti />
             <VoceAmministrazione />
           </nav>
 
@@ -135,6 +154,7 @@ export default function Layout() {
             <Sessione />
           </div>
         </div>
+        <BarraServizio />
       </header>
 
       <main className="flex-1">

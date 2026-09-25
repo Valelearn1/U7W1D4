@@ -2,6 +2,9 @@ import { motion } from 'motion/react'
 import { useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router'
 import { Blocco } from '@/components/Scheletro'
+import Tessera from '@/components/Tessera'
+import AvvisoScadenze from '@/components/AvvisoScadenze'
+import Consigli from '@/components/Consigli'
 import { useSessione } from '@/components/Sessione'
 import { useToast } from '@/components/Toast'
 import { api } from '@/lib/api'
@@ -87,14 +90,19 @@ export default function Profilo() {
         </div>
       </motion.header>
 
-      <motion.section variants={riga} className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <motion.div variants={riga} className="mt-8">
+        <AvvisoScadenze />
+      </motion.div>
+
+      <motion.section variants={riga} className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Numero valore={aperti} etichetta="In corso" />
         <Numero valore={ritardo} etichetta="In ritardo" accento={ritardo > 0} />
         <Numero valore={chiusi} etichetta="Restituiti" />
         <Numero valore={`${penali.toFixed(2)} €`} etichetta="Penali" accento={penali > 0} />
       </motion.section>
 
-      <motion.section variants={riga} className="mt-10">
+      <motion.section variants={riga} className="mt-10 grid gap-8 md:grid-cols-[1fr_minmax(0,280px)]">
+        <div>
         <h2 className="font-titolo text-xl tracking-tight">Anagrafica</h2>
         <dl className="mt-4 divide-y divide-bordo rounded-xl border border-bordo bg-superficie px-4">
           <Voce etichetta="Nome" valore={utente.nome} />
@@ -111,7 +119,16 @@ export default function Profilo() {
         <p className="mt-3 text-xs text-tenue">
           Per correggere i tuoi dati rivolgiti al personale della biblioteca.
         </p>
+        </div>
+
+        <div className="md:pt-9">
+          <Tessera utente={utente} />
+        </div>
       </motion.section>
+
+      <motion.div variants={riga}>
+        <Consigli />
+      </motion.div>
 
       <motion.section variants={riga} className="mt-10">
         <h2 className="font-titolo text-xl tracking-tight">Storico dei prestiti</h2>

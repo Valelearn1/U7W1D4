@@ -148,6 +148,9 @@ export const api = {
 
   // Attenzione: /search e' un POST ma i parametri li legge con @ModelAttribute,
   // cioe' dalla query string, non dal corpo. Quindi niente body qui.
+  // I filtri accettati sono quelli di LibroSearchParams: q, titolo, autore,
+  // casaEditrice, genereId, annoDa, annoA, prezzoMin, prezzoMax,
+  // copertinaRigida, disponibile.
   cercaLibri: ({ page = 0, size = 20, sort, ...filtri } = {}) =>
     chiama(`/api/book/search${queryString({ ...filtri, page, size, sort })}`, { method: 'POST' }),
 

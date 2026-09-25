@@ -10,7 +10,8 @@
     "semina": "node scripts/semina.mjs",
     "promuovi": "node scripts/promuovi.mjs",
     "utenti": "node scripts/utenti-demo.mjs",
-    "verifica": "node scripts/verifica.mjs"
+    "verifica": "node scripts/verifica.mjs",
+    "guarda": "node scripts/guarda.mjs"
   },
   "dependencies": {
     "motion": "^13.4.3",

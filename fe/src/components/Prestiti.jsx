@@ -18,7 +18,7 @@ function giorniAllaScadenza(dataIso) {
   return Math.round((scadenza - oggi) / 86400000)
 }
 
-export default function Prestiti() {
+export default function Prestiti({ intestazione = false }) {
   const { autenticato, operatore } = useSessione()
   const toast = useToast()
 
@@ -68,8 +68,19 @@ export default function Prestiti() {
   const chiusi = (prestiti ?? []).filter((p) => p.stato === 'CHIUSO')
 
   return (
-    <section className="mt-16">
-      <h2 className="font-titolo text-2xl tracking-tight">I tuoi prestiti</h2>
+    <section className={intestazione ? '' : 'mt-16'}>
+      {intestazione ? (
+        <header className="mb-2">
+          <h1 className="font-titolo text-3xl tracking-tight sm:text-4xl">I tuoi prestiti</h1>
+          <p className="mt-1.5 text-sm text-tenue">
+            {aperti.length > 0
+              ? `${aperti.length} ${aperti.length === 1 ? 'libro' : 'libri'} da riconsegnare.`
+              : 'Nessun libro da riconsegnare.'}
+          </p>
+        </header>
+      ) : (
+        <h2 className="font-titolo text-2xl tracking-tight">I tuoi prestiti</h2>
+      )}
 
       {caricamento ? (
         <div className="mt-5 flex flex-col gap-3">
